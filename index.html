@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fortnite Pirate Chest & Loot Simulator</title>
+  <style>
+    :root {
+      --bg-dark: #12151c;
+      --bg-panel: #1b202b;
+      --bg-input: #252c3b;
+      --bg-header: #262e3d;
+      --fg-text: #f1f5f9;
+      --fg-muted: #94a3b8;
+      --border: #2d3648;
+      --accent: #0284c7;
+      --accent-hover: #0ea5e9;
+
+      --gold-fg: #ffd700;
+      --gold-bg: #332900;
+
+      --token-fg: #ff5c8a;
+      --token-bg: #330d1a;
+
+      --vehicle-fg: #ff9e2c;
+      --vehicle-bg: #2e1c07;
+
+      --cosmetic-fg: #c084fc;
+      --cosmetic-bg: #241338;
+
+      --jam-fg: #38bdf8;
+      --jam-bg: #0b2536;
+
+      --screen-fg: #4ade80;
+      --screen-bg: #0d2b19;
+
+      --gizmo-fg: #facc15;
+      --gizmo-bg: #2b2608;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: var(--bg-dark);
+      color: var(--fg-text);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 12px 0;
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    label {
+      font-size: 0.92rem;
+      color: var(--fg-text);
+    }
+
+    .muted {
+      font-size: 0.82rem;
+      color: var(--fg-muted);
+    }
+
+    select,
+    input[type="text"],
+    input[type="number"] {
+      background: var(--bg-input);
+      color: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-family: Consolas, monospace;
+      font-size: 0.92rem;
+      outline: none;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: var(--accent-hover);
+    }
+
+    input[type="text"] {
+      width: 115px;
+    }
+
+    button {
+      background: #2b3447;
+      color: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: #3b4761;
+    }
+
+    button:disabled {
+      background: #1e2430;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .check-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+
+    .summary-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      margin-bottom: 12px;
+      font-family: Consolas, monospace;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-panel);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      font-family: Consolas, monospace;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: var(--bg-header);
+      color: #f8fafc;
+      font-family: "Segoe UI", sans-serif;
+      font-weight: 700;
+      font-size: 0.86rem;
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th.num,
+    td.num {
+      text-align: right;
+    }
+
+    td {
+      padding: 7px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-weight: 600;
+    }
+
+    tr.item-gold {
+      color: var(--gold-fg);
+      background: var(--gold-bg);
+    }
+    tr.item-token {
+      color: var(--token-fg);
+      background: var(--token-bg);
+    }
+    tr.item-vehicle {
+      color: var(--vehicle-fg);
+      background: var(--vehicle-bg);
+    }
+    tr.item-cosmetic {
+      color: var(--cosmetic-fg);
+      background: var(--cosmetic-bg);
+    }
+    tr.item-jam {
+      color: var(--jam-fg);
+      background: var(--jam-bg);
+    }
+    tr.item-screen {
+      color: var(--screen-fg);
+      background: var(--screen-bg);
+    }
+    tr.item-gizmo {
+      color: var(--gizmo-fg);
+      background: var(--gizmo-bg);
+    }
+
+    .log-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .log-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+    }
+
+    .log-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      height: 250px;
+      overflow-y: auto;
+      padding: 8px 12px;
+      font-family: Consolas, monospace;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      white-space: pre;
+    }
+
+    .log-chest {
+      color: #94a3b8;
+    }
+    .log-arrow {
+      color: #64748b;
+    }
+    .log-item-gold {
+      color: var(--gold-fg);
+      font-weight: 700;
+    }
+    .log-item-token {
+      color: var(--token-fg);
+      font-weight: 700;
+    }
+    .log-item-vehicle {
+      color: var(--vehicle-fg);
+      font-weight: 700;
+    }
+    .log-item-cosmetic {
+      color: var(--cosmetic-fg);
+      font-weight: 700;
+    }
+    .log-item-jam {
+      color: var(--jam-fg);
+      font-weight: 700;
+    }
+    .log-item-screen {
+      color: var(--screen-fg);
+      font-weight: 700;
+    }
+    .log-item-gizmo {
+      color: var(--gizmo-fg);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pirate Chest Loot Simulator</h1>
+
+    <div class="row">
+      <label for="modeSelect">Rate Mode:</label>
+      <select id="modeSelect">
+        <option value="normal">Normal Chests</option>
+        <option value="treasure_hours">Treasure Hours (Standard Boost)</option>
+        <option value="golden_week">Golden Week (Nov 28 Treasure Hours)</option>
+      </select>
+
+      <label class="check-label">
+        <input type="checkbox" id="uniqueCheck" />
+        No duplicate non-Gizmos
+      </label>
+    </div>
+
+    <div class="row">
+      <label for="chestsInput">Chests to roll:</label>
+      <input type="text" id="chestsInput" value="1000" />
+
+      <button id="btnOpenBatch" class="primary">Open Chests</button>
+      <button id="btnOpenOne">Open 1 Chest</button>
+      <button id="btnUntilToken">Until Token</button>
+
+      <span class="spacer"></span>
+
+      <button id="btnReset">Reset</button>
+      <button id="btnStop" disabled>Stop</button>
+    </div>
+
+    <div id="summaryBanner" class="summary-card">
+      Chests Opened: 0 &nbsp;&nbsp;|&nbsp;&nbsp; Loot Drops: 0 &nbsp;&nbsp;|&nbsp;&nbsp; Empty Chests: 0
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Loot Category</th>
+          <th class="num">Odds / Chest</th>
+          <th class="num">Pulled</th>
+        </tr>
+      </thead>
+      <tbody id="lootTableBody"></tbody>
+    </table>
+
+    <div class="log-header">
+      <span class="log-title">Drop Log (Chest # and Item):</span>
+      <label for="filterSelect" class="muted">Filter:</label>
+      <select id="filterSelect">
+        <option value="ALL">All Drops</option>
+      </select>
+      <span class="spacer"></span>
+      <span id="maxLogNote" class="muted">Max 2,500 lines shown</span>
+    </div>
+
+    <div id="logBox" class="log-box"></div>
+  </div>
+
+  <script>
+    const BASE_LOOT_TABLE = [
+      { name: "Weekly Gold Outfit", odds: 1562500, cssKey: "gold" },
+      { name: "Pirate Shop Token", odds: 137500, cssKey: "token" },
+      { name: "Weekly Vehicle & Decal", odds: 7813, cssKey: "vehicle" },
+      { name: "Weekly Pickaxe / Back Bling", odds: 568, cssKey: "cosmetic" },
+      { name: "Weekly Jam Track", odds: 391, cssKey: "jam" },
+      { name: "Weekly Loading Screen", odds: 272, cssKey: "screen" },
+      { name: "Gizmo", odds: 127, cssKey: "gizmo" },
+    ];
+
+    const MAX_LOG_LINES = 2500;
+    const CHUNK_SIZE = 20000;
+
+    let totalChests = 0;
+    let emptyChests = 0;
+    let counts = {};
+    let ownedUnique = new Set();
+    let allDrops = [];
+
+    let running = false;
+    let stopRequested = false;
+    let loopTimer = null;
+
+    const modeSelect = document.getElementById("modeSelect");
+    const uniqueCheck = document.getElementById("uniqueCheck");
+    const chestsInput = document.getElementById("chestsInput");
+    const btnOpenBatch = document.getElementById("btnOpenBatch");
+    const btnOpenOne = document.getElementById("btnOpenOne");
+    const btnUntilToken = document.getElementById("btnUntilToken");
+    const btnReset = document.getElementById("btnReset");
+    const btnStop = document.getElementById("btnStop");
+    const summaryBanner = document.getElementById("summaryBanner");
+    const lootTableBody = document.getElementById("lootTableBody");
+    const filterSelect = document.getElementById("filterSelect");
+    const logBox = document.getElementById("logBox");
+    const maxLogNote = document.getElementById("maxLogNote");
+
+    function initState() {
+      totalChests = 0;
+      emptyChests = 0;
+      counts = {};
+      for (const entry of BASE_LOOT_TABLE) {
+        counts[entry.name] = 0;
+      }
+      ownedUnique.clear();
+      allDrops = [];
+    }
+
+    function populateFilterDropdown() {
+      for (const entry of BASE_LOOT_TABLE) {
+        const opt = document.createElement("option");
+        opt.value = entry.name;
+        opt.textContent = entry.name;
+        filterSelect.appendChild(opt);
+      }
+    }
+
+    function getActiveOdds() {
+      const mode = modeSelect.value;
+      const mults = {};
+      for (const entry of BASE_LOOT_TABLE) {
+        mults[entry.name] = 1.0;
+      }
+
+      if (mode === "treasure_hours") {
+        mults["Pirate Shop Token"] = 1.5;
+        mults["Weekly Gold Outfit"] = 7.5;
+        mults["Weekly Vehicle & Decal"] = 10.0;
+      } else if (mode === "golden_week") {
+        mults["Pirate Shop Token"] = 1.5;
+        mults["Weekly Gold Outfit"] = 15.0;
+        mults["Weekly Vehicle & Decal"] = 10.0;
+      }
+
+      return BASE_LOOT_TABLE.map((entry) => ({
+        name: entry.name,
+        cssKey: entry.cssKey,
+        odds: Math.max(1, Math.round(entry.odds / mults[entry.name])),
+      }));
+    }
+
+    function rollSingleChest(chestNum, activeOdds, noDupes) {
+      const drops = [];
+      for (let i = 0; i < activeOdds.length; i++) {
+        const item = activeOdds[i];
+        if (noDupes && item.name !== "Gizmo" && ownedUnique.has(item.name)) {
+          continue;
+        }
+        if (Math.floor(Math.random() * item.odds) === 0) {
+          drops.push({ chestNum, name: item.name, cssKey: item.cssKey });
+          if (noDupes && item.name !== "Gizmo") {
+            ownedUnique.add(item.name);
+          }
+        }
+      }
+      return drops;
+    }
+
+    function createDropLineElement(drop) {
+      const line = document.createElement("div");
+
+      const chestSpan = document.createElement("span");
+      chestSpan.className = "log-chest";
+      chestSpan.textContent = `Chest #${drop.chestNum.toLocaleString()}`;
+
+      const arrowSpan = document.createElement("span");
+      arrowSpan.className = "log-arrow";
+      arrowSpan.textContent = "  ->  ";
+
+      const itemSpan = document.createElement("span");
+      itemSpan.className = `log-item-${drop.cssKey}`;
+      itemSpan.textContent = drop.name;
+
+      line.appendChild(chestSpan);
+      line.appendChild(arrowSpan);
+      line.appendChild(itemSpan);
+      return line;
+    }
+
+    function appendDropsToLog(drops) {
+      const selectedFilter = filterSelect.value;
+      const matching =
+        selectedFilter === "ALL"
+          ? drops
+          : drops.filter((d) => d.name === selectedFilter);
+
+      if (matching.length === 0) return;
+
+      const fragment = document.createDocumentFragment();
+      for (const drop of matching) {
+        fragment.appendChild(createDropLineElement(drop));
+      }
+      logBox.appendChild(fragment);
+
+      while (logBox.childNodes.length > MAX_LOG_LINES) {
+        logBox.removeChild(logBox.firstChild);
+      }
+
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function rebuildLogView() {
+      const selectedFilter = filterSelect.value;
+      const matching =
+        selectedFilter === "ALL"
+          ? allDrops.slice(-MAX_LOG_LINES)
+          : allDrops.filter((d) => d.name === selectedFilter).slice(-MAX_LOG_LINES);
+
+      logBox.innerHTML = "";
+      const fragment = document.createDocumentFragment();
+      for (const drop of matching) {
+        fragment.appendChild(createDropLineElement(drop));
+      }
+      logBox.appendChild(fragment);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function refreshTable() {
+      const activeOdds = getActiveOdds();
+      let totalDrops = 0;
+      for (const entry of BASE_LOOT_TABLE) {
+        totalDrops += counts[entry.name];
+      }
+
+      summaryBanner.innerHTML =
+        `Chests Opened: ${totalChests.toLocaleString()} &nbsp;&nbsp;|&nbsp;&nbsp; ` +
+        `Loot Drops: ${totalDrops.toLocaleString()} &nbsp;&nbsp;|&nbsp;&nbsp; ` +
+        `Empty Chests: ${emptyChests.toLocaleString()}`;
+
+      lootTableBody.innerHTML = "";
+      for (const item of activeOdds) {
+        const tr = document.createElement("tr");
+        tr.className = `item-${item.cssKey}`;
+
+        const tdName = document.createElement("td");
+        tdName.textContent = item.name;
+
+        const tdOdds = document.createElement("td");
+        tdOdds.className = "num";
+        tdOdds.textContent = `1 in ${item.odds.toLocaleString()}`;
+
+        const tdPulled = document.createElement("td");
+        tdPulled.className = "num";
+        tdPulled.textContent = counts[item.name].toLocaleString();
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdOdds);
+        tr.appendChild(tdPulled);
+        lootTableBody.appendChild(tr);
+      }
+    }
+
+    function setBusy(isBusy) {
+      running = isBusy;
+      btnOpenBatch.disabled = isBusy;
+      btnOpenOne.disabled = isBusy;
+      btnUntilToken.disabled = isBusy;
+      btnReset.disabled = isBusy;
+      chestsInput.disabled = isBusy;
+      btnStop.disabled = !isBusy;
+    }
+
+    function openOneChest() {
+      if (running) return;
+      const activeOdds = getActiveOdds();
+      const noDupes = uniqueCheck.checked;
+
+      totalChests += 1;
+      const drops = rollSingleChest(totalChests, activeOdds, noDupes);
+      if (drops.length > 0) {
+        for (const d of drops) {
+          counts[d.name] += 1;
+        }
+        allDrops.push(...drops);
+        appendDropsToLog(drops);
+      } else {
+        emptyChests += 1;
+      }
+      refreshTable();
+    }
+
+    function startBatchRoll() {
+      if (running) return;
+      const cleaned = chestsInput.value.replace(/,/g, "").trim();
+      const targetChests = Number(cleaned);
+      if (!Number.isInteger(targetChests) || targetChests < 1) {
+        alert("Enter a whole number of 1 or more chests.");
+        return;
+      }
+
+      stopRequested = false;
+      setBusy(true);
+      const activeOdds = getActiveOdds();
+      const noDupes = uniqueCheck.checked;
+      let rolledSoFar = 0;
+
+      function stepChunk() {
+        if (stopRequested || rolledSoFar >= targetChests) {
+          refreshTable();
+          setBusy(false);
+          return;
+        }
+
+        const countThisChunk = Math.min(CHUNK_SIZE, targetChests - rolledSoFar);
+        const chunkDrops = [];
+
+        for (let i = 0; i < countThisChunk; i++) {
+          rolledSoFar += 1;
+          totalChests += 1;
+          const drops = rollSingleChest(totalChests, activeOdds, noDupes);
+          if (drops.length > 0) {
+            for (const d of drops) {
+              counts[d.name] += 1;
+            }
+            chunkDrops.push(...drops);
+          } else {
+            emptyChests += 1;
+          }
+        }
+
+        if (chunkDrops.length > 0) {
+          allDrops.push(...chunkDrops);
+          appendDropsToLog(chunkDrops);
+        }
+        refreshTable();
+
+        if (stopRequested || rolledSoFar >= targetChests) {
+          setBusy(false);
+        } else {
+          loopTimer = setTimeout(stepChunk, 0);
+        }
+      }
+
+      loopTimer = setTimeout(stepChunk, 0);
+    }
+
+    function startUntilToken() {
+      if (running) return;
+      stopRequested = false;
+      setBusy(true);
+      const activeOdds = getActiveOdds();
+      const noDupes = uniqueCheck.checked;
+
+      function stepChunk() {
+        if (stopRequested) {
+          refreshTable();
+          setBusy(false);
+          return;
+        }
+
+        const chunkDrops = [];
+        let foundToken = false;
+
+        for (let i = 0; i < CHUNK_SIZE; i++) {
+          totalChests += 1;
+          const drops = rollSingleChest(totalChests, activeOdds, noDupes);
+          if (drops.length > 0) {
+            for (const d of drops) {
+              counts[d.name] += 1;
+              if (d.name === "Pirate Shop Token") {
+                foundToken = true;
+              }
+            }
+            chunkDrops.push(...drops);
+          } else {
+            emptyChests += 1;
+          }
+          if (foundToken) break;
+        }
+
+        if (chunkDrops.length > 0) {
+          allDrops.push(...chunkDrops);
+          appendDropsToLog(chunkDrops);
+        }
+        refreshTable();
+
+        if (stopRequested || foundToken) {
+          setBusy(false);
+        } else {
+          loopTimer = setTimeout(stepChunk, 0);
+        }
+      }
+
+      loopTimer = setTimeout(stepChunk, 0);
+    }
+
+    function stopRolling() {
+      stopRequested = true;
+      if (loopTimer) {
+        clearTimeout(loopTimer);
+        loopTimer = null;
+      }
+      refreshTable();
+      setBusy(false);
+    }
+
+    function resetAll() {
+      if (running) return;
+      initState();
+      logBox.innerHTML = "";
+      refreshTable();
+    }
+
+    maxLogNote.textContent = `Max ${MAX_LOG_LINES.toLocaleString()} lines shown`;
+    populateFilterDropdown();
+    initState();
+    refreshTable();
+
+    btnOpenBatch.addEventListener("click", startBatchRoll);
+    btnOpenOne.addEventListener("click", openOneChest);
+    btnUntilToken.addEventListener("click", startUntilToken);
+    btnReset.addEventListener("click", resetAll);
+    btnStop.addEventListener("click", stopRolling);
+    modeSelect.addEventListener("change", refreshTable);
+    filterSelect.addEventListener("change", rebuildLogView);
+  </script>
+</body>
+</html>
